@@ -43,8 +43,8 @@ export const useZkSyncEthereumBalanceStore = defineStore("zkSyncEthereumBalances
           amount: "0",
         })),
     ].sort((a, b) => {
-      if (a.address === utils.ETH_ADDRESS) return -1; // Always bring ETH to the beginning
-      if (b.address === utils.ETH_ADDRESS) return 1; // Keep ETH at the beginning if comparing with any other token
+      if (a.address.toUpperCase() === utils.ETH_ADDRESS.toUpperCase()) return -1; // Always bring ETH to the beginning
+      if (b.address.toUpperCase() === utils.ETH_ADDRESS.toUpperCase()) return 1; // Keep ETH at the beginning if comparing with any other token
       return 0; // Keep other tokens' order unchanged
     });
   };
@@ -80,32 +80,20 @@ export const useZkSyncEthereumBalanceStore = defineStore("zkSyncEthereumBalances
     };
 
     return await Promise.all(
-      allTokens.map(async (token) => {
-        try {
-          const balance = await getBalanceWithRetry(wagmiConfig, {
-            address: account.value.address!,
-            chainId: l1Network.value!.id,
-            token: token.address === utils.ETH_ADDRESS ? undefined : (token.address! as Hash),
-          });
-
-          if (!balance) {
-            throw new Error(`Balance for token ${token.symbol} is undefined`);
-          }
-
-          return {
-            ...token,
-            symbol: token.symbol ?? balance.symbol,
-            decimals: token.decimals ?? balance.decimals,
-            amount: balance.value.toString(),
-          };
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error(`Failed to fetch ${token.symbol} balance after retries:`, error);
-          return {
-            ...token,
-            amount: "0",
-          };
-        }
+      Object.values(l1Tokens.value ?? []).map(async (token) => {
+        const amount = await getBalance(wagmiConfig, {
+          address: account.value.address!,
+          chainId: l1Network.value!.id,
+          token: [utils.ETH_ADDRESS.toUpperCase(), utils.ETH_ADDRESS_IN_CONTRACTS.toUpperCase()].includes(
+            token.address.toUpperCase()
+          )
+            ? undefined
+            : (token.address! as Hash),
+        });
+        return {
+          ...token,
+          amount: amount.value.toString(),
+        };
       })
     );
   };

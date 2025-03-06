@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { BigNumber, ethers } from "ethers";
+=======
+>>>>>>> matter-labs/kl/gateway-fix
 import { type Provider } from "zksync-ethers";
 import IERC20 from "zksync-ethers/abi/IERC20.json";
 
@@ -6,7 +9,6 @@ import { MAINNET } from "~/data/mainnet";
 import { TESTNET } from "~/data/testnet";
 
 import type { Token, TokenAmount } from "@/types";
-import type { BigNumberish } from "ethers";
 
 export type FeeEstimationParams = {
   type: "transfer" | "withdrawal";
@@ -22,12 +24,18 @@ export default (
   totalComputeAmount: Ref<BigNumber>
 ) => {
   let params: FeeEstimationParams | undefined;
+<<<<<<< HEAD
   const gasLimit = ref<BigNumberish | undefined>();
   const gasPrice = ref<BigNumberish | undefined>();
   const approvalNeeded = ref(false);
   const allowanceValue = ref<BigNumber | undefined>();
   const { selectedNetwork } = storeToRefs(useNetworkStore());
   const NETWORK_CONFIG = selectedNetwork.value.key === "sophon" ? MAINNET : TESTNET;
+=======
+
+  const gasLimit = ref<bigint | undefined>();
+  const gasPrice = ref<bigint | undefined>();
+>>>>>>> matter-labs/kl/gateway-fix
 
   const totalFee = computed(() => {
     return "0"; // fee check disabled
@@ -45,7 +53,7 @@ export default (
     }
     const feeTokenBalance = balances.value.find((e) => e.address === feeToken.value!.address);
     if (!feeTokenBalance) return true;
-    if (totalFee.value && BigNumber.from(totalFee.value).gt(feeTokenBalance.amount)) {
+    if (totalFee.value && BigInt(totalFee.value) > feeTokenBalance.amount) {
       return false;
     }
     return true; */

@@ -54,7 +54,7 @@
           :tokens="availableTokens"
           :balances="availableBalances"
           :max-amount="maxAmount"
-          :loading="tokensRequestInProgress || balanceInProgress"
+          :loading="tokensRequestInProgress || balanceInProgress || feeLoading"
           :approve-required="!enoughAllowance && (!tokenCustomBridge || !tokenCustomBridge.bridgingDisabled)"
         >
           <template v-if="type === 'withdrawal' && account.address" #token-dropdown-bottom>
@@ -275,7 +275,7 @@
                   <CommonAlert variant="error" :icon="ExclamationTriangleIcon">
                     <p>
                       {{
-                        selectedToken?.address === L2_BASE_TOKEN_ADDRESS
+                        selectedToken?.address.toUpperCase() === L2_BASE_TOKEN_ADDRESS.toUpperCase()
                           ? "The fee has changed since the last estimation. "
                           : ""
                       }}Insufficient <span class="font-medium">{{ selectedToken?.symbol }}</span> balance to pay for
@@ -324,8 +324,7 @@
 <script lang="ts" setup>
 import { ExclamationTriangleIcon, InformationCircleIcon, LockClosedIcon } from "@heroicons/vue/24/outline";
 import { useRouteQuery } from "@vueuse/router";
-import { BigNumber } from "ethers";
-import { isAddress } from "ethers/lib/utils";
+import { isAddress } from "ethers";
 
 import useLayerzeroFee from "@/composables/layerzero/useFee";
 import useLayerzeroTransaction from "@/composables/layerzero/useTransaction";
@@ -406,7 +405,10 @@ const routeTokenAddress = computed(() => {
   return checksumAddress(route.query.token);
 });
 const defaultToken = computed(
-  () => availableTokens.value.find((e) => e.address === L2_BASE_TOKEN_ADDRESS) ?? availableTokens.value[0] ?? undefined
+  () =>
+    availableTokens.value.find((e) => e.address.toUpperCase() === L2_BASE_TOKEN_ADDRESS.toUpperCase()) ??
+    availableTokens.value[0] ??
+    undefined
 );
 const selectedTokenAddress = ref<string | undefined>(routeTokenAddress.value ?? defaultToken.value?.address);
 const selectedToken = computed<Token | undefined>(() => {
@@ -537,28 +539,36 @@ const maxAmount = computed(() => {
     return undefined;
   }
   if (feeToken.value?.address === selectedToken.value.address) {
-    if (BigNumber.from(tokenBalance.value).isZero()) {
+    if (BigInt(tokenBalance.value) === 0n) {
       return "0";
     }
     if (!fee.value) {
       return undefined;
     }
-    if (BigNumber.from(fee.value).gt(tokenBalance.value)) {
+    if (BigInt(fee.value) > BigInt(tokenBalance.value)) {
       return "0";
     }
-    return BigNumber.from(tokenBalance.value).sub(fee.value).toString();
+    return String(BigInt(tokenBalance.value) - BigInt(fee.value));
   }
   return tokenBalance.value.toString();
 });
-
+const totalComputeAmount = computed(() => {
+  try {
+    if (!amount.value || !selectedToken.value) {
+      return 0n;
+    }
+    return decimalToBigNumber(amount.value, selectedToken.value.decimals);
+  } catch (error) {
+    return 0n;
+  }
+});
 const enoughBalanceForTransaction = computed(() => {
   if (!fee.value || !selectedToken.value || !tokenBalance.value) {
     return true;
   }
-  const totalToPay = totalComputeAmount.value.add(
-    selectedToken.value.address === feeToken.value?.address ? fee.value : "0"
-  );
-  return BigNumber.from(tokenBalance.value).gte(totalToPay);
+  const totalToPay =
+    totalComputeAmount.value + (selectedToken.value.address === feeToken.value?.address ? BigInt(fee.value) : 0n);
+  return BigInt(tokenBalance.value) >= totalToPay;
 });
 
 const transaction = computed<
@@ -662,7 +672,7 @@ const continueButtonDisabled = computed(() => {
     !enoughBalanceToCoverFee.value ||
     !enoughBalanceForTransaction.value ||
     !!amountError.value ||
-    BigNumber.from(transaction.value.token.amount).isZero()
+    BigInt(transaction.value.token.amount) === 0n
   ) {
     return true;
   }
@@ -743,7 +753,7 @@ const makeTransaction = async () => {
   }
 
   if (tx) {
-    const fee = calculateFee(gasLimit.value!, gasPrice.value!);
+    const fee = calculateFee(BigInt(gasLimit.value!), BigInt(gasPrice.value!));
     walletStore.deductBalance(feeToken.value!.address, fee);
     walletStore.deductBalance(transaction.value!.token.address, transaction.value!.token.amount);
     transactionInfo.value = {

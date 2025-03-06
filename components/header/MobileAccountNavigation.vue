@@ -38,6 +38,63 @@
           </DestinationItem>
         </CommonCardWithLineButtons>
       </div>
+      <div v-else-if="openedTab === 'help'">
+        <div class="mb-block-gap flex items-center gap-block-padding-1/2">
+          <CommonButtonBack size="sm" @click="openedTab = 'main'" />
+          <span class="text-lg">Help</span>
+        </div>
+        <CommonCardWithLineButtons class="mt-block-padding-1/2">
+          <DestinationItem
+            label="Discord"
+            description="Get support, follow announcements and connect with community"
+            as="a"
+            href="https://join.zksync.dev/"
+            target="_blank"
+            :icon="ArrowTopRightOnSquareIcon"
+            size="sm"
+          >
+            <template #image>
+              <div class="flex h-full w-full items-center justify-center rounded-full bg-[#5865F2] text-white">
+                <IconsDiscord class="h-6 w-6" />
+              </div>
+            </template>
+          </DestinationItem>
+        </CommonCardWithLineButtons>
+        <CommonCardWithLineButtons class="mt-block-padding-1/2">
+          <DestinationItem
+            label="FAQ"
+            description="Find tutorials and answers to the most common questions"
+            as="a"
+            href="https://matterlabs.gitbook.io/zksync-community-hub/support/faq"
+            target="_blank"
+            :icon="ArrowTopRightOnSquareIcon"
+            size="sm"
+          >
+            <template #image>
+              <DestinationIconContainer>
+                <QuestionMarkCircleIcon aria-hidden="true" />
+              </DestinationIconContainer>
+            </template>
+          </DestinationItem>
+        </CommonCardWithLineButtons>
+        <CommonCardWithLineButtons class="mt-block-padding-1/2">
+          <DestinationItem
+            label="Official Documentation"
+            description="Developer resources and technical ZKsync documentation"
+            as="a"
+            href="https://era.zksync.io"
+            target="_blank"
+            :icon="ArrowTopRightOnSquareIcon"
+            size="sm"
+          >
+            <template #image>
+              <DestinationIconContainer>
+                <BookOpenIcon aria-hidden="true" />
+              </DestinationIconContainer>
+            </template>
+          </DestinationItem>
+        </CommonCardWithLineButtons>
+      </div>
     </transition>
   </HeaderMobileNavigation>
 </template>

@@ -12,14 +12,29 @@
 </template>
 
 <script lang="ts">
-export default {
+import DOMPurify from "dompurify";
+import { defineComponent, computed } from "vue";
+
+export default defineComponent({
   props: {
     error: {
-      type: Object as PropType<any>,
+      type: Object as PropType<{ statusCode: number; message: string }>,
       required: true,
+      validator: (value: { statusCode: number; message: string }) => {
+        return typeof value.statusCode === "number" && typeof value.message === "string";
+      },
     },
   },
-};
+  setup(props: { error: { statusCode: number; message: string } }) {
+    const sanitizedErrorMessage = computed(() => {
+      return DOMPurify.sanitize(props.error.message);
+    });
+
+    return {
+      sanitizedErrorMessage,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

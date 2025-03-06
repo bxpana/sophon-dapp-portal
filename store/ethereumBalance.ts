@@ -1,5 +1,4 @@
-import { Alchemy, Network } from "alchemy-sdk";
-import { BigNumber } from "ethers";
+import { AnkrProvider } from "@ankr.com/ankr.js";
 import { utils } from "zksync-ethers";
 
 import { l1Networks } from "@/data/networks";
@@ -76,8 +75,8 @@ export const useEthereumBalanceStore = defineStore("ethereumBalance", () => {
     if (!balance.value) return;
     const tokenBalance = balance.value.find((balance) => balance.address === tokenL1Address);
     if (!tokenBalance) return;
-    const newBalance = BigNumber.from(tokenBalance.amount).sub(amount);
-    tokenBalance.amount = newBalance.isNegative() ? "0" : newBalance.toString();
+    const newBalance = BigInt(tokenBalance.amount) - BigInt(amount);
+    tokenBalance.amount = newBalance < 0n ? "0" : newBalance.toString();
   };
 
   onboardStore.subscribeOnAccountChange(() => {
